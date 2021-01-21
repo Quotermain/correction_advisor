@@ -60,10 +60,31 @@ def run(ticker):
     tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
     tf_1hour = tf_1min.resample('60Min').agg(AGG_DICT)
 
-    #condition_1min = tf_1min
+    condition_short = (
+        (
+            (tf_5min.Close[0] - tf_5min.Open[0]) / tf_5min.Open[0] >=
+            (open_close_5min_dif_mean[ticker] + 3 * open_close_5min_dif_std[ticker])
+        ) and
+        (
+            (tf_1min.Close[0] - tf_1min.Open[0]) / tf_1min.Open[0] >=
+            (open_close_1min_dif_mean[ticker] + 3 * open_close_1min_dif_std[ticker])
+        )
+    )
+    condition_long = (
+        (
+            (tf_5min.Open[0] - tf_5min.Close[0]) / tf_5min.Open[0] >=
+            (open_close_5min_dif_mean[ticker] + 3 * open_close_5min_dif_std[ticker])
+        ) and
+        (
+            (tf_1min.Open[0] - tf_1min.Close[0]) / tf_1min.Open[0] >=
+            (open_close_1min_dif_mean[ticker] + 3 * open_close_1min_dif_std[ticker])
+        )
+    )
 
-    print(tf_5min.Open[0])
-    sleep(50000)
+    if condition_short:
+        print(ticker, ': SHORT')
+    elif condition_long:
+        print(ticker, ': LONG')
 
 if __name__ == '__main__':
     while True:
