@@ -62,24 +62,26 @@ def run(ticker):
 
     condition_short = (
         (
-            (tf_5min.Close[0] - tf_5min.Open[0]) / tf_5min.Open[0] >=
+            (tf_5min.Close[-1] - tf_5min.Open[-1]) / tf_5min.Open[-1] >=
             (open_close_5min_dif_mean[ticker] + 3 * open_close_5min_dif_std[ticker])
         ) and
         (
-            (tf_1min.Close[0] - tf_1min.Open[0]) / tf_1min.Open[0] >=
+            (tf_1min.Close[-1] - tf_1min.Open[-1]) / tf_1min.Open[-1] >=
             (open_close_1min_dif_mean[ticker] + 3 * open_close_1min_dif_std[ticker])
         )
     )
     condition_long = (
         (
-            (tf_5min.Open[0] - tf_5min.Close[0]) / tf_5min.Open[0] >=
+            (tf_5min.Open[-1] - tf_5min.Close[-1]) / tf_5min.Open[-1] >=
             (open_close_5min_dif_mean[ticker] + 3 * open_close_5min_dif_std[ticker])
         ) and
         (
-            (tf_1min.Open[0] - tf_1min.Close[0]) / tf_1min.Open[0] >=
+            (tf_1min.Open[-1] - tf_1min.Close[-1]) / tf_1min.Open[-1] >=
             (open_close_1min_dif_mean[ticker] + 3 * open_close_1min_dif_std[ticker])
         )
     )
+
+    signal_is_sent = check_signal_is_sent(ticker)
 
     if condition_short:
         print(ticker, ': SHORT')
