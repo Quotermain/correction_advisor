@@ -1,8 +1,36 @@
 from multiprocessing import Pool
 from pandas_datareader import data as pdr
 from time import sleep
+import pickle
 import yfinance as yf
 yf.pdr_override()
+
+data_path = './data/thresholds/'
+
+with open(data_path + 'open_close_week_dif_mean.pickle', 'rb') as file:
+    open_close_week_dif_mean = pickle.load(file)
+with open(data_path + 'open_close_week_dif_std.pickle', 'rb') as file:
+    open_close_week_dif_std = pickle.load(file)
+
+with open(data_path + 'open_close_day_dif_mean.pickle', 'rb') as file:
+    open_close_day_dif_mean = pickle.load(file)
+with open(data_path + 'open_close_day_dif_std.pickle', 'rb') as file:
+    open_close_day_dif_std = pickle.load(file)
+
+with open(data_path + 'open_close_hour_dif_mean.pickle', 'rb') as file:
+    open_close_hour_dif_mean = pickle.load(file)
+with open(data_path + 'open_close_hour_dif_std.pickle', 'rb') as file:
+    open_close_hour_dif_std = pickle.load(file)
+
+with open(data_path + 'open_close_5min_dif_mean.pickle', 'rb') as file:
+    open_close_5min_dif_mean = pickle.load(file)
+with open(data_path + 'open_close_5min_dif_std.pickle', 'rb') as file:
+    open_close_5min_dif_std = pickle.load(file)
+
+with open(data_path + 'open_close_1min_dif_mean.pickle', 'rb') as file:
+    open_close_1min_dif_mean = pickle.load(file)
+with open(data_path + 'open_close_1min_dif_std.pickle', 'rb') as file:
+    open_close_1min_dif_std = pickle.load(file)
 
 ALL_TICKERS = [
     'MTSS.ME', 'AFLT.ME', 'OGKB.ME', 'MGNT.ME', 'TATN.ME', 'MTLR.ME', 'IBM',
@@ -17,15 +45,24 @@ ALL_TICKERS = [
     'ABBV', 'EA', 'NEE', 'JNJ', 'CRM', 'UNH', 'FDX', 'BMY', 'CVX', 'HPQ', 'AVGO',
     'DAL', 'PG', 'F', 'GM'
 ]
-AGG_DICT = {'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}
+
+AGG_DICT = {
+    'Open': 'first', 'High': 'max', 'Low': 'min',
+    'Close': 'last', 'Volume': 'sum'
+}
+
 
 def run(ticker):
+
     tf_1min = pdr.get_data_yahoo(ticker, period='1d', interval='1m').loc[
         :, ['Open', 'High', 'Low', 'Close', 'Volume']
     ]
     tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
     tf_1hour = tf_1min.resample('60Min').agg(AGG_DICT)
-    print(tf_5min)
+
+    #condition_1min = tf_1min
+
+    print(tf_5min.Open[0])
     sleep(50000)
 
 if __name__ == '__main__':
