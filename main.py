@@ -1,5 +1,6 @@
 from multiprocessing import Pool
 from pandas_datareader import data as pdr
+from time import sleep
 import yfinance as yf
 yf.pdr_override()
 
@@ -16,12 +17,16 @@ ALL_TICKERS = [
     'ABBV', 'EA', 'NEE', 'JNJ', 'CRM', 'UNH', 'FDX', 'BMY', 'CVX', 'HPQ', 'AVGO',
     'DAL', 'PG', 'F', 'GM'
 ]
+AGG_DICT = {'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'}
 
 def run(ticker):
-    data = pdr.get_data_yahoo(
-        ticker, period='1d', interval='1m'
-    )
-    print(data)
+    tf_1min = pdr.get_data_yahoo(ticker, period='1d', interval='1m').loc[
+        :, ['Open', 'High', 'Low', 'Close', 'Volume']
+    ]
+    tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
+    tf_1hour = tf_1min.resample('60Min').agg(AGG_DICT)
+    print(tf_5min)
+    sleep(50000)
 
 if __name__ == '__main__':
     while True:
