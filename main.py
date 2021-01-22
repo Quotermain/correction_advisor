@@ -64,9 +64,9 @@ def run(ticker):
 
     if (not signal_is_sent):
 
-        tf_1min = pdr.get_data_yahoo(ticker, period='1d', interval='1m').loc[
-            :, ['Open', 'High', 'Low', 'Close', 'Volume']
-        ]
+        tf_1min = pdr.get_data_yahoo(
+            ticker, period='1d', interval='1m', progress=False
+        ).loc[:, ['Open', 'High', 'Low', 'Close', 'Volume']]
         tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
         tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
 
@@ -132,5 +132,10 @@ def run(ticker):
 
 if __name__ == '__main__':
     while True:
-        with Pool(4) as p:
-            p.map(run, ALL_TICKERS)
+        try:
+            with Pool(4) as p:
+                p.map(run, ALL_TICKERS)
+        except KeyboardInterrupt:
+            print('Aborting')
+        except Exception:
+            continue
