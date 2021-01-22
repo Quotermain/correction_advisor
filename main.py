@@ -68,8 +68,12 @@ def run(ticker):
             :, ['Open', 'High', 'Low', 'Close', 'Volume']
         ]
         tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
-        tf_1hour = tf_1min.resample('60Min').agg(AGG_DICT)
+        tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
 
+        THRESH_HOUR = (
+            open_close_hour_dif_mean[ticker] +
+            3 * open_close_hour_dif_std[ticker]
+        )
         THRESH_5MIN = (
             open_close_5min_dif_mean[ticker] +
             3 * open_close_5min_dif_std[ticker]
@@ -87,6 +91,10 @@ def run(ticker):
         )
         condition_short = (
             (
+                (tf_hour.Close[-1] - tf_hour.Open[-1]) /
+                tf_hour.Open[-1] >= THRESH_HOUR
+            ) and
+            (
                 (tf_5min.Close[-1] - tf_5min.Open[-1]) /
                 tf_5min.Open[-1] >= THRESH_5MIN
             ) and
@@ -96,6 +104,10 @@ def run(ticker):
             )
         )
         condition_long = (
+            (
+                (tf_hour.Open[-1] - tf_hour.Close[-1]) /
+                tf_hour.Open[-1] >= THRESH_HOUR
+            ) and
             (
                 (tf_5min.Open[-1] - tf_5min.Close[-1]) /
                 tf_5min.Open[-1] >= THRESH_5MIN
