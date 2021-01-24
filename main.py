@@ -3,13 +3,16 @@ from utils.check_signal_is_sent import check_signal_is_sent
 from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 from utils.calculate_trade_size import calculate_trade_size
 
+import pandas as pd
 from datetime import datetime
 from multiprocessing import Pool
 from pandas_datareader import data as pdr
 from time import sleep
 import pickle
 import yfinance as yf
+from technical_indicators_lib import RSI
 yf.pdr_override()
+pd.options.mode.chained_assignment = None
 
 data_path = './data/thresholds/'
 
@@ -53,68 +56,62 @@ ALL_TICKERS = [
 ]
 
 AGG_DICT = {
-    'Open': 'first', 'High': 'max', 'Low': 'min',
-    'Close': 'last', 'Volume': 'sum'
+    'open': 'first', 'high': 'max', 'low': 'min',
+    'close': 'last', 'volume': 'sum'
+}
+COL_NAMES = {
+    'Open': 'open', 'High': 'high', 'Low': 'low',
+    'Close': 'close', 'Volume': 'volume'
 }
 
-
 def run(ticker):
+
+    #print(ticker)
 
     signal_is_sent = check_signal_is_sent(ticker)
 
     if (not signal_is_sent):
 
         tf_1min = pdr.get_data_yahoo(
-            ticker, period='1d', interval='1m', progress=False
+            ticker, period='3d', interval='1m', progress=False
         ).loc[:, ['Open', 'High', 'Low', 'Close', 'Volume']]
+        tf_1min.rename(columns=COL_NAMES, inplace=True)
         tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
         tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
+
+        rsi = RSI()
+        tf_1min = rsi.get_value_df(tf_1min)
+        tf_5min = rsi.get_value_df(tf_5min)
 
         THRESH_HOUR = (
             open_close_hour_dif_mean[ticker] +
             3 * open_close_hour_dif_std[ticker]
         )
-        THRESH_5MIN = (
+        '''THRESH_5MIN = (
             open_close_5min_dif_mean[ticker] +
             3 * open_close_5min_dif_std[ticker]
         )
         THRESH_1MIN = (
             open_close_1min_dif_mean[ticker] +
             3 * open_close_1min_dif_std[ticker]
-        )
-        TARGET_THRESH = (
+        )'''
+        STOP_LOSS_THRESH = (
             open_close_5min_dif_mean[ticker] +
             open_close_5min_dif_std[ticker]
         )
         trade_size = calculate_trade_size(
-            ticker, TARGET_THRESH, tf_5min.Close[-1]
+            ticker, STOP_LOSS_THRESH, tf_5min.close[-1]
         )
-        condition_short = (
+        condition_short = tf_5min.RSI[-1] >= 70 and tf_1min.RSI[-1] >= 70 and (
             (
-                (tf_hour.Close[-1] - tf_hour.Open[-1]) /
-                tf_hour.Open[-1] >= THRESH_HOUR
-            ) and
-            (
-                (tf_5min.Close[-1] - tf_5min.Open[-1]) /
-                tf_5min.Open[-1] >= THRESH_5MIN
-            ) and
-            (
-                (tf_1min.Close[-1] - tf_1min.Open[-1]) /
-                tf_1min.Open[-1] >= THRESH_1MIN
-            )
+                (tf_hour.close[-1] - tf_hour.open[-1]) /
+                tf_hour.open[-1] >= THRESH_HOUR
+            ) 
         )
-        condition_long = (
+        condition_long = tf_5min.RSI[-1] <= 30 and tf_1min.RSI[-1] <= 30 and (
             (
-                (tf_hour.Open[-1] - tf_hour.Close[-1]) /
-                tf_hour.Open[-1] >= THRESH_HOUR
-            ) and
-            (
-                (tf_5min.Open[-1] - tf_5min.Close[-1]) /
-                tf_5min.Open[-1] >= THRESH_5MIN
-            ) and
-            (
-                (tf_1min.Open[-1] - tf_1min.Close[-1]) /
-                tf_1min.Open[-1] >= THRESH_1MIN
+                (tf_hour.open[-1] - tf_hour.close[-1]) /
+                tf_hour.open[-1] >= THRESH_HOUR
             )
         )
 
