@@ -2,17 +2,14 @@ from utils.send_message import send_message
 from utils.check_signal_is_sent import check_signal_is_sent
 from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 from utils.calculate_trade_size import calculate_trade_size
+from utils.get_candles import get_candles
 
 import pandas as pd
 from datetime import datetime
 from multiprocessing import Pool
-from pandas_datareader import data as pdr
 from time import sleep
 import pickle
-import yfinance as yf
 from technical_indicators_lib import RSI
-yf.pdr_override()
-pd.options.mode.chained_assignment = None
 
 data_path = './data/thresholds/'
 
@@ -41,27 +38,12 @@ with open(data_path + 'open_close_1min_dif_mean.pickle', 'rb') as file:
 with open(data_path + 'open_close_1min_dif_std.pickle', 'rb') as file:
     open_close_1min_dif_std = pickle.load(file)
 
-ALL_TICKERS = [
-    'MTSS.ME', 'AFLT.ME', 'OGKB.ME', 'MGNT.ME', 'TATN.ME', 'MTLR.ME', 'IBM',
-    'ALRS.ME', 'SBER.ME', 'MOEX.ME', 'HYDR.ME', 'ROSN.ME', 'LKOH.ME', 'SIBN.ME',
-    'GMKN.ME', 'RTKM.ME', 'SNGS.ME', 'CHMF.ME', 'VTBR.ME', 'NVTK.ME', 'GAZP.ME',
-    'YNDX.ME', 'NLMK.ME', 'FIVE.ME', 'SBERP.ME', 'SNGSP.ME', 'BTCUSD=X', 'ETHUSD=X',
-    'EURUSD=X', 'USDJPY=X', 'GBPUSD=X', 'USDRUB=X', 'AUDUSD=X', 'NZDUSD=X', 'USDHKD=X',
-    'USDSGD=X', 'USDMXN=X', 'USDZAR=X', 'USDCNH=X', 'USDCAD=X', 'USDCHF=X', 'AAPL',
-    'BA', 'AMZN', 'NVDA', 'FB', 'MSFT', 'MCD', 'TGT', 'V', 'TWTR', 'INTC', 'GOOG',
-    'T', 'XOM', 'PFE', 'DIS', 'WMT', 'AMD', 'NFLX', 'MU', 'MA', 'ATVI', 'NKE',
-    'CSCO', 'PYPL', 'GE', 'NEM', 'QCOM', 'SBUX', 'ADBE', 'KO', 'KHC', 'CAT', 'BIIB',
-    'ABBV', 'EA', 'NEE', 'JNJ', 'CRM', 'UNH', 'FDX', 'BMY', 'CVX', 'HPQ', 'AVGO',
-    'DAL', 'PG', 'F', 'GM'
-]
+with open('data/tickers/ALL_TICKERS.pickle', 'rb') as file:
+    ALL_TICKERS = pickle.load(file)
 
 AGG_DICT = {
     'open': 'first', 'high': 'max', 'low': 'min',
     'close': 'last', 'volume': 'sum'
-}
-COL_NAMES = {
-    'Open': 'open', 'High': 'high', 'Low': 'low',
-    'Close': 'close', 'Volume': 'volume'
 }
 
 def run(ticker):
@@ -72,17 +54,20 @@ def run(ticker):
 
     if (not signal_is_sent):
 
-        tf_1min = pdr.get_data_yahoo(
-            ticker, period='3d', interval='1m', progress=False
-        ).loc[:, ['Open', 'High', 'Low', 'Close', 'Volume']]
-        tf_1min.rename(columns=COL_NAMES, inplace=True)
+        tf_1min = get_candles(ticker, '1m', '7d')
         tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
         tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
+        tf_day = tf_1min.resample('1D').agg(AGG_DICT)
 
         rsi = RSI()
         tf_1min = rsi.get_value_df(tf_1min)
         tf_5min = rsi.get_value_df(tf_5min)
 
+
+        THRESH_DAY = (
+            open_close_day_dif_mean[ticker] +
+            2 * open_close_day_dif_std[ticker]
+        )
         THRESH_HOUR = (
             open_close_hour_dif_mean[ticker] +
             3 * open_close_hour_dif_std[ticker]
@@ -103,16 +88,18 @@ def run(ticker):
             ticker, STOP_LOSS_THRESH, tf_5min.close[-1]
         )
         condition_short = tf_5min.RSI[-1] >= 70 and tf_1min.RSI[-1] >= 70 and (
-            (
-                (tf_hour.close[-1] - tf_hour.open[-1]) /
-                tf_hour.open[-1] >= THRESH_HOUR
-            ) 
+            (tf_day.close[-1] - tf_day.open[-1]) /
+            tf_day.open[-1] >= THRESH_DAY
+        ) and (
+            (tf_hour.close[-1] - tf_hour.open[-1]) /
+            tf_hour.open[-1] >= THRESH_HOUR
         )
         condition_long = tf_5min.RSI[-1] <= 30 and tf_1min.RSI[-1] <= 30 and (
-            (
-                (tf_hour.open[-1] - tf_hour.close[-1]) /
-                tf_hour.open[-1] >= THRESH_HOUR
-            )
+            (tf_day.open[-1] - tf_day.close[-1]) /
+            tf_day.open[-1] >= THRESH_DAY
+        ) and (
+            (tf_hour.open[-1] - tf_hour.close[-1]) /
+            tf_hour.open[-1] >= THRESH_HOUR
         )
 
         cur_time = str(datetime.now().time())
@@ -129,10 +116,13 @@ def run(ticker):
 
 if __name__ == '__main__':
     while True:
+        '''for ticker in ALL_TICKERS:
+            run(ticker)'''
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
         except KeyboardInterrupt:
             print('Aborting')
-        except Exception:
+        except Exception as e:
+            print(e)
             continue
