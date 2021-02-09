@@ -64,10 +64,9 @@ def run(ticker):
         tf_5min = rsi.get_value_df(tf_5min)
 
 
-        THRESH_DAY = (
-            open_close_day_dif_mean[ticker] +
-            2 * open_close_day_dif_std[ticker]
-        )
+        '''THRESH_DAY = (
+            open_close_day_dif_mean[ticker]
+        )'''
         THRESH_HOUR = (
             open_close_hour_dif_mean[ticker] +
             3 * open_close_hour_dif_std[ticker]
@@ -80,26 +79,29 @@ def run(ticker):
             open_close_1min_dif_mean[ticker] +
             3 * open_close_1min_dif_std[ticker]
         )'''
-        STOP_LOSS_THRESH = (
-            open_close_5min_dif_mean[ticker] +
-            open_close_5min_dif_std[ticker]
-        )
-        trade_size = calculate_trade_size(
-            ticker, STOP_LOSS_THRESH, tf_5min.close[-1]
-        )
+
         condition_short = tf_5min.RSI[-1] >= 70 and tf_1min.RSI[-1] >= 70 and (
             (tf_day.close[-1] - tf_day.open[-1]) /
-            tf_day.open[-1] >= THRESH_DAY
+            tf_day.open[-1] >= 0
         ) and (
             (tf_hour.close[-1] - tf_hour.open[-1]) /
             tf_hour.open[-1] >= THRESH_HOUR
         )
         condition_long = tf_5min.RSI[-1] <= 30 and tf_1min.RSI[-1] <= 30 and (
             (tf_day.open[-1] - tf_day.close[-1]) /
-            tf_day.open[-1] >= THRESH_DAY
+            tf_day.open[-1] >= 0
         ) and (
             (tf_hour.open[-1] - tf_hour.close[-1]) /
             tf_hour.open[-1] >= THRESH_HOUR
+        )
+
+        # Trade size depends on STOP_LOSS_THRESH
+        STOP_LOSS_THRESH = (
+            open_close_5min_dif_mean[ticker] +
+            open_close_5min_dif_std[ticker]
+        )
+        trade_size = calculate_trade_size(
+            ticker, STOP_LOSS_THRESH, tf_5min.close[-1]
         )
 
         cur_time = str(datetime.now().time())

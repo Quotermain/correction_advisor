@@ -2595,3 +2595,7 @@ QXcbConnection: XCB error: 9 (BadDrawable), sequence: 1151, resource id: 8598329
 QXcbConnection: XCB error: 13 (BadGC), sequence: 1152, resource id: 85983296, major code: 60 (FreeGC), minor code: 0
 QXcbConnection: XCB error: 4 (BadPixmap), sequence: 1153, resource id: 85983295, major code: 54 (FreePixmap), minor code: 0
 this function is deprecated, use QScreen::grabWindow() instead. Defaulting to primary screen.
+QStandardPaths: XDG_RUNTIME_DIR not set, defaulting to '/tmp/runtime-root'
+this function is deprecated, use QScreen::grabWindow() instead. Defaulting to primary screen.
+this function is deprecated, use QScreen::grabWindow() instead. Defaulting to primary screen.
+this function is deprecated, use QScreen::grabWindow() instead. Defaulting to primary screen.
