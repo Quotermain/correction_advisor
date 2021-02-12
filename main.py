@@ -106,13 +106,21 @@ def run(ticker):
 
         cur_time = str(datetime.now().time())
         if condition_short:
-            print(cur_time, ticker, ': SHORT')
-            messsage = ' '.join([cur_time, ticker, 'SHORT', str(trade_size)])
+            sl = tf_5min.close[-1] + STOP_LOSS_THRESH * tf_5min.close[-1]
+            tp = tf_5min.close[-1] - STOP_LOSS_THRESH * tf_5min.close[-1]
+            print('\n', cur_time, ticker, ': SHORT', sl, tp, '\n')
+            messsage = ' '.join(
+                [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
+            )
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long:
-            print(cur_time, ticker, ': LONG')
-            messsage = ' '.join([cur_time, ticker, 'LONG', str(trade_size)])
+            sl = tf_5min.close[-1] - STOP_LOSS_THRESH * tf_5min.close[-1]
+            tp = tf_5min.close[-1] + STOP_LOSS_THRESH * tf_5min.close[-1]
+            print('\n', cur_time, ticker, ': LONG', sl, tp, '\n')
+            messsage = ' '.join(
+                [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
+            )
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
 
@@ -126,5 +134,9 @@ if __name__ == '__main__':
         except KeyboardInterrupt:
             print('Aborting')
         except Exception as e:
-            print(e)
-            continue
+            try:
+                print(e)
+                continue
+            except Exception:
+                print('Can"t print')
+                continue
