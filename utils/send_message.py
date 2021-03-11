@@ -1,5 +1,6 @@
 import smtplib, ssl
-from email.message import EmailMessage
+from email.mime.text import MIMEText
+from sys import argv
 
 PORT = 465
 LOGIN = 'pavelhat233@gmail.com'
@@ -11,8 +12,14 @@ def send_message(message):
 		server.login(LOGIN, PASSWORD)
 		sender = LOGIN
 		reciever = 'bpconsult45@gmail.com'
-		message = f"Subject: {message}\n "
-		server.sendmail(sender, reciever, message)
+
+		msg = MIMEText(message)
+		msg['Subject'] = message
+		msg['To'] = reciever
+		msg['From'] = sender
+
+		server.sendmail(sender, reciever, msg.as_string())
 
 if __name__ == '__main__':
-	send_message('test')
+	message = argv[1]
+	send_message(message)

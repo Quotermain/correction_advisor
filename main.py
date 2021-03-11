@@ -1,123 +1,77 @@
-from utils.send_message import send_message
-from utils.check_signal_is_sent import check_signal_is_sent
-from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
-from utils.calculate_trade_size import calculate_trade_size
-from utils.get_candles import get_candles
 
-import pandas as pd
+from utils.calculate_trade_size import calculate_trade_size
+from utils.check_signal_is_sent import check_signal_is_sent
+from utils.get_candles import get_candles
+from utils.load_pickle_object import load_pickle_object
+from utils.send_message import send_message
+from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
+
 from datetime import datetime
 from multiprocessing import Pool
-from time import sleep
+import pandas as pd
 import pickle
 from technical_indicators_lib import RSI
+from time import sleep
+pd.options.mode.chained_assignment = None  # default='warn'
 
 data_path = './data/thresholds/'
-
-with open(data_path + 'open_close_week_dif_mean.pickle', 'rb') as file:
-    open_close_week_dif_mean = pickle.load(file)
-with open(data_path + 'open_close_week_dif_std.pickle', 'rb') as file:
-    open_close_week_dif_std = pickle.load(file)
-
-with open(data_path + 'open_close_day_dif_mean.pickle', 'rb') as file:
-    open_close_day_dif_mean = pickle.load(file)
-with open(data_path + 'open_close_day_dif_std.pickle', 'rb') as file:
-    open_close_day_dif_std = pickle.load(file)
-
-with open(data_path + 'open_close_hour_dif_mean.pickle', 'rb') as file:
-    open_close_hour_dif_mean = pickle.load(file)
-with open(data_path + 'open_close_hour_dif_std.pickle', 'rb') as file:
-    open_close_hour_dif_std = pickle.load(file)
-
-with open(data_path + 'open_close_5min_dif_mean.pickle', 'rb') as file:
-    open_close_5min_dif_mean = pickle.load(file)
-with open(data_path + 'open_close_5min_dif_std.pickle', 'rb') as file:
-    open_close_5min_dif_std = pickle.load(file)
-
-with open(data_path + 'open_close_1min_dif_mean.pickle', 'rb') as file:
-    open_close_1min_dif_mean = pickle.load(file)
-with open(data_path + 'open_close_1min_dif_std.pickle', 'rb') as file:
-    open_close_1min_dif_std = pickle.load(file)
-
-with open('data/tickers/ALL_TICKERS.pickle', 'rb') as file:
-    ALL_TICKERS = pickle.load(file)
-
+open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
+open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
+ALL_TICKERS = open_close_hour_dif_mean.keys()
 AGG_DICT = {
     'open': 'first', 'high': 'max', 'low': 'min',
-    'close': 'last', 'volume': 'sum'
+    'close': 'last', 'real_volume': 'sum'
 }
 
 def run(ticker):
-
-    #print(ticker)
 
     signal_is_sent = check_signal_is_sent(ticker)
 
     if (not signal_is_sent):
 
-        tf_1min = get_candles(ticker, '1m', '7d')
-        tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
+        tf_1min = get_candles(ticker)
         tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
-        tf_day = tf_1min.resample('1D').agg(AGG_DICT)
 
         rsi = RSI()
-        tf_1min = rsi.get_value_df(tf_1min)
-        tf_5min = rsi.get_value_df(tf_5min)
+        rsi.get_value_df(tf_1min)
 
-
-        '''THRESH_DAY = (
-            open_close_day_dif_mean[ticker]
-        )'''
+        # If size of a bar exceeds this threshold then try to open position
         THRESH_HOUR = (
-            open_close_hour_dif_mean[ticker] +
-            3 * open_close_hour_dif_std[ticker]
+            open_close_hour_dif_mean[ticker]
+            + 3 * open_close_hour_dif_std[ticker]
         )
-        '''THRESH_5MIN = (
-            open_close_5min_dif_mean[ticker] +
-            3 * open_close_5min_dif_std[ticker]
-        )
-        THRESH_1MIN = (
-            open_close_1min_dif_mean[ticker] +
-            3 * open_close_1min_dif_std[ticker]
-        )'''
 
-        condition_short = tf_5min.RSI[-1] >= 70 and tf_1min.RSI[-1] >= 70 and (
-            (tf_day.close[-1] - tf_day.open[-1]) /
-            tf_day.open[-1] >= 0
-        ) and (
+        condition_short = tf_1min.RSI[-1] >= 70 and (
             (tf_hour.close[-1] - tf_hour.open[-1]) /
             tf_hour.open[-1] >= THRESH_HOUR
         )
-        condition_long = tf_5min.RSI[-1] <= 30 and tf_1min.RSI[-1] <= 30 and (
-            (tf_day.open[-1] - tf_day.close[-1]) /
-            tf_day.open[-1] >= 0
-        ) and (
+        condition_long = tf_1min.RSI[-1] <= 30 and (
             (tf_hour.open[-1] - tf_hour.close[-1]) /
             tf_hour.open[-1] >= THRESH_HOUR
         )
 
         # Trade size depends on STOP_LOSS_THRESH
         STOP_LOSS_THRESH = (
-            open_close_5min_dif_mean[ticker] +
-            open_close_5min_dif_std[ticker]
+            open_close_hour_dif_mean[ticker]
         )
         trade_size = calculate_trade_size(
-            ticker, STOP_LOSS_THRESH, tf_5min.close[-1]
+            STOP_LOSS_THRESH, tf_1min.close[-1]
         )
 
         cur_time = str(datetime.now().time())
         if condition_short:
-            sl = tf_5min.close[-1] + STOP_LOSS_THRESH * tf_5min.close[-1]
-            tp = tf_5min.close[-1] - STOP_LOSS_THRESH * tf_5min.close[-1]
-            print('\n', cur_time, ticker, ': SHORT', sl, tp, '\n')
+            sl = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
+            tp = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
+            print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
             )
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long:
-            sl = tf_5min.close[-1] - STOP_LOSS_THRESH * tf_5min.close[-1]
-            tp = tf_5min.close[-1] + STOP_LOSS_THRESH * tf_5min.close[-1]
-            print('\n', cur_time, ticker, ': LONG', sl, tp, '\n')
+            sl = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
+            tp = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
+            print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
             )
@@ -126,8 +80,6 @@ def run(ticker):
 
 if __name__ == '__main__':
     while True:
-        '''for ticker in ALL_TICKERS:
-            run(ticker)'''
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)

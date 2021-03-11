@@ -1,22 +1,18 @@
+from utils.load_pickle_object import load_pickle_object
+
 import pandas as pd
 from sys import argv
-import yfinance as yf
-from pandas_datareader import data as pdr
-yf.pdr_override()
-pd.options.mode.chained_assignment = None
 
-COL_NAMES = {
-    'Open': 'open', 'High': 'high', 'Low': 'low',
-    'Close': 'close', 'Volume': 'volume'
-}
-
-def get_candles(ticker, interval, period):
-    df = pdr.get_data_yahoo(
-        ticker, period=period, interval=interval, progress=False
-    ).loc[:, ['Open', 'High', 'Low', 'Close', 'Volume']]
-    df.rename(columns=COL_NAMES, inplace=True)
+def get_candles(ticker):
+    """
+    Loads raw prices as ndarray of np.void -> translates it to pandas dataframe
+    """
+    raw_prices = load_pickle_object(f'/mnt/win_share/prices/{ticker}.pickle')
+    df = pd.DataFrame(raw_prices)
+    df['time']=pd.to_datetime(df['time'], unit='s')
+    df.set_index('time', inplace=True)
     return df
 
 if __name__ == '__main__':
-    ticker, interval, period = argv[1], argv[2], argv[3]
-    print(get_candles(ticker, interval, period))
+    ticker = argv[1]
+    print(get_candles(ticker))

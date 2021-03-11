@@ -1,12 +1,10 @@
+
 from mysql.connector import connect
 import pickle
 
-import os
-
-print(os.listdir('.'))
-
-with open('data/tickers/ALL_TICKERS.pickle', 'rb') as file:
-    ALL_TICKERS = pickle.load(file)
+data_path = './data/thresholds/'
+with open(data_path + 'open_close_hour_dif_std.pickle', 'rb') as file:
+    ALL_TICKERS = pickle.load(file).keys()
 
 CRIDENTIALS = {
     'host': 'localhost', 'user': 'root', 'autocommit': True,
