@@ -14,6 +14,7 @@ from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
 
 data_path = './data/thresholds/'
+contract_sizes = load_pickle_object('data/contract_sizes.pickle')
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
 ALL_TICKERS = open_close_hour_dif_mean.keys()
@@ -55,7 +56,7 @@ def run(ticker):
         )
         trade_size = calculate_trade_size(
             STOP_LOSS_THRESH, tf_1min.close[-1]
-        )
+        ) / contract_sizes[ticker]
 
         cur_time = str(datetime.now().time())
         if condition_short:
