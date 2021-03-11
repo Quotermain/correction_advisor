@@ -9,7 +9,6 @@ from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 from datetime import datetime
 from multiprocessing import Pool
 import pandas as pd
-import pickle
 from technical_indicators_lib import RSI
 from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'

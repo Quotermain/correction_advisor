@@ -7,7 +7,7 @@ LOGIN = 'pavelhat233@gmail.com'
 PASSWORD = 'quotermain233'
 
 def send_message(message):
-	context = ssl.create_default_context()
+	context = ssl._create_unverified_context()
 	with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=context) as server:
 		server.login(LOGIN, PASSWORD)
 		sender = LOGIN
