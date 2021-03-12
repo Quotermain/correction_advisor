@@ -50,13 +50,15 @@ def run(ticker):
             tf_hour.open[-1] >= THRESH_HOUR
         )
 
-        # Trade size depends on STOP_LOSS_THRESH
+        # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
         STOP_LOSS_THRESH = (
             open_close_hour_dif_mean[ticker]
+            + open_close_hour_dif_std[ticker]
         )
         trade_size = calculate_trade_size(
             STOP_LOSS_THRESH, tf_1min.close[-1]
         ) / contract_sizes[ticker]
+        trade_size = round(trade_size)
 
         cur_time = str(datetime.now().time())
         if condition_short:
