@@ -14,7 +14,7 @@ from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
 
 data_path = './data/thresholds/'
-contract_sizes = load_pickle_object('data/contract_sizes.pickle')
+ticker_info = load_pickle_object('data/ticker_info.pickle')
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
 ALL_TICKERS = open_close_hour_dif_mean.keys()
@@ -57,13 +57,19 @@ def run(ticker):
         )
         trade_size = calculate_trade_size(
             STOP_LOSS_THRESH, tf_1min.close[-1]
-        ) / contract_sizes[ticker]
+        ) / ticker_info[ticker]['min_lot']
         trade_size = round(trade_size)
 
         cur_time = str(datetime.now().time())
         if condition_short:
-            sl = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
-            tp = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
+            sl = round(
+                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1],
+                ticker_info[ticker]['price_digits']
+            )
+            tp = round(
+                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1],
+                ticker_info[ticker]['price_digits']
+            )
             print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
@@ -71,8 +77,14 @@ def run(ticker):
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long:
-            sl = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
-            tp = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
+            sl = round(
+                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1],
+                ticker_info[ticker]['price_digits']
+            )
+            tp = round(
+                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1],
+                ticker_info[ticker]['price_digits']
+            )
             print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
