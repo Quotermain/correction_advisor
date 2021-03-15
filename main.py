@@ -53,7 +53,7 @@ def run(ticker):
         # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
         STOP_LOSS_THRESH = (
             open_close_hour_dif_mean[ticker]
-            + open_close_hour_dif_std[ticker]
+            + 2 * open_close_hour_dif_std[ticker]
         )
         trade_size = calculate_trade_size(
             STOP_LOSS_THRESH, tf_1min.close[-1]
@@ -101,8 +101,11 @@ if __name__ == '__main__':
             print('Aborting')
         except Exception as e:
             try:
-                print(e)
+                #print(e)
                 continue
             except Exception:
                 print('Can"t print')
                 continue
+
+    '''for ticker in ALL_TICKERS:
+        run(ticker)'''
