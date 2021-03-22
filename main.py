@@ -99,13 +99,16 @@ if __name__ == '__main__':
                 p.map(run, ALL_TICKERS)
         except KeyboardInterrupt:
             print('Aborting')
+        except EOFError:
+            continue
         except Exception as e:
             try:
-                #print(e)
+                print(e)
                 continue
             except Exception:
                 print('Can"t print')
                 continue
 
-    '''for ticker in ALL_TICKERS:
-        run(ticker)'''
+    '''while True:
+        for ticker in ALL_TICKERS:
+            run(ticker)'''
