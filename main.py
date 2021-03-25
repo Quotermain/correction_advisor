@@ -34,6 +34,7 @@ def run(ticker):
 
         rsi = RSI()
         rsi.get_value_df(tf_1min)
+        rsi.get_value_df(tf_hour)
 
         # If size of a bar exceeds this threshold then try to open position
         THRESH_HOUR = (
@@ -43,11 +44,11 @@ def run(ticker):
 
         condition_short = tf_1min.RSI[-1] >= 70 and (
             (tf_hour.close[-1] - tf_hour.open[-1]) /
-            tf_hour.open[-1] >= THRESH_HOUR
+            tf_hour.open[-1] >= THRESH_HOUR or tf_hour.RSI[-1] >= 70
         )
         condition_long = tf_1min.RSI[-1] <= 30 and (
             (tf_hour.open[-1] - tf_hour.close[-1]) /
-            tf_hour.open[-1] >= THRESH_HOUR
+            tf_hour.open[-1] >= THRESH_HOUR or tf_hour.RSI[-1] <= 30
         )
 
         # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
