@@ -1,4 +1,4 @@
-from utils.load_pickle_object import load_pickle_object
+from load_pickle_object import load_pickle_object
 
 import pandas as pd
 from sys import argv

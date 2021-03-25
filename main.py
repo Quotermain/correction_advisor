@@ -99,7 +99,7 @@ if __name__ == '__main__':
                 p.map(run, ALL_TICKERS)
         except KeyboardInterrupt:
             print('Aborting')
-        except EOFError:
+        except (EOFError, KeyError):
             continue
         except Exception as e:
             try:
