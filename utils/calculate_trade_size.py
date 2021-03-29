@@ -1,6 +1,12 @@
 import sys
 
-def calculate_trade_size(acceptable_PERC_loss, last_close):
+USDRUB = 75
+def calculate_trade_size(ticker, acceptable_PERC_loss, last_close):
+    """
+    Converts dollars to rubles for proper calculation 
+    """
+    if '_SPB' in ticker:
+        last_close = last_close * USDRUB
     trade_size = 100 / (acceptable_PERC_loss * last_close)
     return trade_size
 

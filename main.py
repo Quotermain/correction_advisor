@@ -7,6 +7,7 @@ from utils.send_message import send_message
 from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 
 from datetime import datetime
+from decimal import Decimal
 from multiprocessing import Pool
 import pandas as pd
 from technical_indicators_lib import RSI
@@ -14,13 +15,16 @@ from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
 
 data_path = './data/thresholds/'
-ticker_info = load_pickle_object('data/ticker_info.pickle')
+ticker_info = pd.read_csv(
+    '/mnt/quik_prices/all_assets.csv',
+    names=['ticker', 'class', 'min_lot', 'price_step'],
+    index_col=0
+)
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
 ALL_TICKERS = open_close_hour_dif_mean.keys()
 AGG_DICT = {
-    'open': 'first', 'high': 'max', 'low': 'min',
-    'close': 'last', 'real_volume': 'sum'
+    'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'
 }
 
 def run(ticker):
@@ -35,7 +39,7 @@ def run(ticker):
         rsi = RSI()
         rsi.get_value_df(tf_1min)
 
-        # If size of a bar exceeds this threshold then try to open position
+        # If size of a bar exceeds this threshold
         THRESH_HOUR = (
             open_close_hour_dif_mean[ticker]
             + 3 * open_close_hour_dif_std[ticker]
@@ -55,20 +59,20 @@ def run(ticker):
             open_close_hour_dif_mean[ticker]
             + 2 * open_close_hour_dif_std[ticker]
         )
+
         trade_size = calculate_trade_size(
-            STOP_LOSS_THRESH, tf_1min.close[-1]
-        ) / ticker_info[ticker]['min_lot']
+            ticker, STOP_LOSS_THRESH, tf_1min.close[-1]
+        ) / ticker_info.loc[ticker, 'min_lot']
         trade_size = round(trade_size)
 
         cur_time = str(datetime.now().time())
+        digits = -Decimal(str(ticker_info.loc[ticker, 'price_step'])).as_tuple().exponent
         if condition_short:
             sl = round(
-                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1],
-                ticker_info[ticker]['price_digits']
+                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1], digits
             )
             tp = round(
-                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1],
-                ticker_info[ticker]['price_digits']
+                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1], digits
             )
             print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
@@ -78,12 +82,10 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
         elif condition_long:
             sl = round(
-                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1],
-                ticker_info[ticker]['price_digits']
+                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1], digits
             )
             tp = round(
-                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1],
-                ticker_info[ticker]['price_digits']
+                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1], digits
             )
             print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
@@ -93,7 +95,7 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
-    while True:
+    '''while True:
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
@@ -107,8 +109,8 @@ if __name__ == '__main__':
                 continue
             except Exception:
                 print('Can"t print')
-                continue
+                continue'''
 
-    '''while True:
+    while True:
         for ticker in ALL_TICKERS:
-            run(ticker)'''
+            run(ticker)

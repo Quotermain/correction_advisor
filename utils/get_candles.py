@@ -1,17 +1,16 @@
-from load_pickle_object import load_pickle_object
-
 import pandas as pd
 from sys import argv
 
+data_path = '/mnt/quik_prices/prices/'
+
 def get_candles(ticker):
     """
-    Loads raw prices as ndarray of np.void -> translates it to pandas dataframe
+    Loads prices from mounted windows folder's csv files
     """
-    raw_prices = load_pickle_object(f'/mnt/win_share/prices/{ticker}.pickle')
-    df = pd.DataFrame(raw_prices)
-    df['time']=pd.to_datetime(df['time'], unit='s')
-    df.set_index('time', inplace=True)
-    return df
+    candles = pd.read_csv(data_path + ticker + '.csv')
+    candles['datetime']=pd.to_datetime(candles['datetime'])
+    candles.set_index('datetime', inplace=True)
+    return candles
 
 if __name__ == '__main__':
     ticker = argv[1]
