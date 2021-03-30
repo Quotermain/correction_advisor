@@ -66,14 +66,9 @@ def run(ticker):
         trade_size = round(trade_size)
 
         cur_time = str(datetime.now().time())
-        digits = -Decimal(str(ticker_info.loc[ticker, 'price_step'])).as_tuple().exponent
         if condition_short:
-            sl = round(
-                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1], digits
-            )
-            tp = round(
-                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1], digits
-            )
+            sl = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
+            tp = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
             print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
@@ -81,12 +76,8 @@ def run(ticker):
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long:
-            sl = round(
-                tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1], digits
-            )
-            tp = round(
-                tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1], digits
-            )
+            sl = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
+            tp = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
             print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
@@ -95,7 +86,7 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
-    '''while True:
+    while True:
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
@@ -109,8 +100,8 @@ if __name__ == '__main__':
                 continue
             except Exception:
                 print('Can"t print')
-                continue'''
+                continue
 
-    while True:
+    '''while True:
         for ticker in ALL_TICKERS:
-            run(ticker)
+            run(ticker)'''
