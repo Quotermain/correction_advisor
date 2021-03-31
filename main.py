@@ -7,7 +7,6 @@ from utils.send_message import send_message
 from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 
 from datetime import datetime
-from decimal import Decimal
 from multiprocessing import Pool
 import pandas as pd
 from technical_indicators_lib import RSI
@@ -66,7 +65,7 @@ def run(ticker):
         trade_size = round(trade_size)
 
         cur_time = str(datetime.now().time())
-        if condition_short:
+        if condition_short and trade_size != 0:
             sl = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
             tp = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
             print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
@@ -75,7 +74,7 @@ def run(ticker):
             )
             send_message(messsage)
             set_signal_is_sent_flag(ticker)
-        elif condition_long:
+        elif condition_long and trade_size != 0:
             sl = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
             tp = tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1]
             print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
