@@ -21,9 +21,10 @@ ticker_info = pd.read_csv(
 )
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
-ALL_TICKERS = open_close_hour_dif_mean.keys()
+# DON'T FORGET TO CHANGE FOR SPB
+ALL_TICKERS = [ticker for ticker in open_close_hour_dif_mean.keys() if '_SPB' not in ticker]
 AGG_DICT = {
-    'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last'
+    'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': 'sum'
 }
 
 def run(ticker):
@@ -72,7 +73,7 @@ def run(ticker):
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
             )
-            send_message(messsage)
+            #send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long and trade_size != 0:
             sl = tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1]
@@ -81,7 +82,7 @@ def run(ticker):
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
             )
-            send_message(messsage)
+            #send_message(messsage)
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
@@ -91,7 +92,7 @@ if __name__ == '__main__':
                 p.map(run, ALL_TICKERS)
         except KeyboardInterrupt:
             print('Aborting')
-        except (EOFError, KeyError):
+        except (EOFError, KeyError, ValueError):
             continue
         except Exception as e:
             try:
