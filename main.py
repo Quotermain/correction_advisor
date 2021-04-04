@@ -22,10 +22,16 @@ ticker_info = pd.read_csv(
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
 # DON'T FORGET TO CHANGE FOR SPB
-ALL_TICKERS = [ticker for ticker in open_close_hour_dif_mean.keys() if '_SPB' not in ticker]
+ALL_TICKERS = [
+    'NVTK', 'SBER', 'GAZP', 'POLY', 'TATN', 'LKOH', 'MTSS', 'ROSN', 'MAIL', 'YNDX',
+    'PLZL', 'FIVE', 'GMKN', 'MGNT', 'SNGS', 'SNGSP', 'SBERP', 'ALRS', 'MOEX'
+]
 AGG_DICT = {
     'open': 'first', 'high': 'max', 'low': 'min', 'close': 'last', 'volume': 'sum'
 }
+
+print(ALL_TICKERS)
+sleep(1000)
 
 def run(ticker):
 
@@ -34,10 +40,11 @@ def run(ticker):
     if (not signal_is_sent):
 
         tf_1min = get_candles(ticker)
-        tf_hour = tf_1min.resample('60Min').agg(AGG_DICT)
+        tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
 
         rsi = RSI()
         rsi.get_value_df(tf_1min)
+        rsi.get_value_df(tf_5min)
 
         # If size of a bar exceeds this threshold
         THRESH_HOUR = (
@@ -45,14 +52,8 @@ def run(ticker):
             + 3 * open_close_hour_dif_std[ticker]
         )
 
-        condition_short = tf_1min.RSI[-1] >= 70 and (
-            (tf_hour.close[-1] - tf_hour.open[-1]) /
-            tf_hour.open[-1] >= THRESH_HOUR
-        )
-        condition_long = tf_1min.RSI[-1] <= 30 and (
-            (tf_hour.open[-1] - tf_hour.close[-1]) /
-            tf_hour.open[-1] >= THRESH_HOUR
-        )
+        condition_short = tf_1min.RSI[-1] >= 75 and tf_5min.RSI[-1] >=75
+        condition_long = tf_1min.RSI[-1] <= 25 and tf_5min.RSI[-1] <= 25
 
         # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
         STOP_LOSS_THRESH = (
@@ -102,6 +103,6 @@ if __name__ == '__main__':
                 print('Can"t print')
                 continue
 
-    '''while True:
+'''    while True:
         for ticker in ALL_TICKERS:
             run(ticker)'''
