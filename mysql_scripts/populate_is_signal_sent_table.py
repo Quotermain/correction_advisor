@@ -2,9 +2,11 @@
 from mysql.connector import connect
 import pickle
 
-data_path = './data/thresholds/'
-with open(data_path + 'open_close_hour_dif_std.pickle', 'rb') as file:
-    ALL_TICKERS = pickle.load(file).keys()
+ALL_TICKERS = [
+    'NVTK', 'SBER', 'GAZP', 'POLY', 'TATN', 'LKOH', 'MTSS', 'ROSN', 'MAIL', 'YNDX',
+    'PLZL', 'FIVE', 'GMKN', 'MGNT', 'SNGS', 'SNGSP', 'SBERP', 'ALRS', 'MOEX', 'RTKM',
+    'VTBR'
+]
 
 CRIDENTIALS = {
     'host': 'localhost', 'user': 'root', 'autocommit': True,
