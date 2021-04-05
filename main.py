@@ -40,6 +40,11 @@ def run(ticker):
         rsi.get_value_df(tf_1min)
         rsi.get_value_df(tf_5min)
 
+        if ticker == 'GAZP':
+            print(ticker)
+            print(tf_1min)
+            sleep(100)
+
         condition_short = tf_1min.RSI[-1] >= 70 and tf_5min.RSI[-1] >= 70
         condition_long = tf_1min.RSI[-1] <= 30 and tf_5min.RSI[-1] <= 30
 
@@ -86,7 +91,7 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
-    while True:
+    '''while True:
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
@@ -100,8 +105,8 @@ if __name__ == '__main__':
                 continue
             except Exception:
                 print('Can"t print')
-                continue
+                continue'''
 
-    '''while True:
+    while True:
         for ticker in ALL_TICKERS:
-            run(ticker)'''
+            run(ticker)
