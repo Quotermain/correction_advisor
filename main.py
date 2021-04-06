@@ -9,7 +9,8 @@ from utils.set_signal_is_sent_flag import set_signal_is_sent_flag
 from datetime import datetime
 from multiprocessing import Pool
 import pandas as pd
-from technical_indicators_lib import RSI
+import pickle
+from ta.momentum import RSIIndicator
 from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -36,17 +37,11 @@ def run(ticker):
         tf_1min = get_candles(ticker)
         tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
 
-        rsi = RSI()
-        rsi.get_value_df(tf_1min)
-        rsi.get_value_df(tf_5min)
+        rsi_1min = RSIIndicator(close=tf_1min.close).rsi()
+        rsi_5min = RSIIndicator(close=tf_5min.close).rsi()
 
-        if ticker == 'GAZP':
-            print(ticker)
-            print(tf_1min)
-            sleep(100)
-
-        condition_short = tf_1min.RSI[-1] >= 70 and tf_5min.RSI[-1] >= 70
-        condition_long = tf_1min.RSI[-1] <= 30 and tf_5min.RSI[-1] <= 30
+        condition_short = rsi_1min[-1] >= 70 and rsi_5min[-1] >= 70
+        condition_long = rsi_1min[-1] <= 30 and rsi_5min[-1] <= 30
 
         # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
         STOP_LOSS_THRESH = (
@@ -91,13 +86,13 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
-    '''while True:
+    while True:
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
         except KeyboardInterrupt:
             print('Aborting')
-        except (EOFError, KeyError):
+        except (EOFError, KeyError, pickle.UnpicklingError, ValueError):
             continue
         except Exception as e:
             try:
@@ -105,8 +100,8 @@ if __name__ == '__main__':
                 continue
             except Exception:
                 print('Can"t print')
-                continue'''
+                continue
 
-    while True:
+    '''while True:
         for ticker in ALL_TICKERS:
-            run(ticker)
+            run(ticker)'''
