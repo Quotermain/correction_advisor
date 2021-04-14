@@ -40,13 +40,12 @@ def run(ticker):
         rsi_1min = RSIIndicator(close=tf_1min.close).rsi()
         rsi_5min = RSIIndicator(close=tf_5min.close).rsi()
 
-        condition_short = rsi_1min[-1] >= 70 and rsi_5min[-1] >= 70
-        condition_long = rsi_1min[-1] <= 30 and rsi_5min[-1] <= 30
+        condition_short = rsi_1min[-1] >= 80 and rsi_5min[-1] >= 80
+        condition_long = rsi_1min[-1] <= 20 and rsi_5min[-1] <= 20
 
         # Trade size depends on STOP_LOSS_THRESH. MT5 limitations.
         STOP_LOSS_THRESH = (
             open_close_hour_dif_mean[ticker]
-            + 2 * open_close_hour_dif_std[ticker]
         )
         trade_size = calculate_trade_size(
             STOP_LOSS_THRESH, tf_1min.close[-1]
