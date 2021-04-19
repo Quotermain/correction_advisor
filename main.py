@@ -21,7 +21,7 @@ open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_m
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
 
 prices_path = '/mnt/win_share/prices/'
-ALL_TICKERS = [file_name.split()[0] for file_name in listdir(prices_path)]
+ALL_TICKERS = [file_name.split('.')[0] for file_name in listdir(prices_path)]
 
 AGG_DICT = {
     'open': 'first', 'high': 'max', 'low': 'min',
@@ -85,7 +85,7 @@ def run(ticker):
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
-    while True:
+    '''while True:
         try:
             with Pool(4) as p:
                 p.map(run, ALL_TICKERS)
@@ -99,8 +99,8 @@ if __name__ == '__main__':
                 continue
             except Exception:
                 print('Can"t print')
-                continue
+                continue'''
 
-    '''while True:
+    while True:
         for ticker in ALL_TICKERS:
-            run(ticker)'''
+            run(ticker)

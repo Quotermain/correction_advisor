@@ -1,12 +1,9 @@
-
 from mysql.connector import connect
 import pickle
+from os import listdir
 
-ALL_TICKERS = [
-    'NVTK', 'SBER', 'GAZP', 'POLY', 'TATN', 'LKOH', 'MTSS', 'ROSN', 'MAIL', 'YNDX',
-    'PLZL', 'FIVE', 'GMKN', 'MGNT', 'SNGS', 'SNGSP', 'SBERP', 'ALRS', 'MOEX', 'RTKM',
-    'VTBR'
-]
+prices_path = '/mnt/win_share/prices/'
+ALL_TICKERS = [file_name.split('.')[0] for file_name in listdir(prices_path)]
 
 CRIDENTIALS = {
     'host': 'localhost', 'user': 'root', 'autocommit': True,
