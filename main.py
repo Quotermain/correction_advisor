@@ -10,6 +10,7 @@ from datetime import datetime
 from multiprocessing import Pool
 import pandas as pd
 import pickle
+from os import listdir
 from ta.momentum import RSIIndicator
 from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -18,11 +19,10 @@ data_path = './data/thresholds/'
 ticker_info = load_pickle_object('data/ticker_info.pickle')
 open_close_hour_dif_mean = load_pickle_object(data_path + 'open_close_hour_dif_mean.pickle')
 open_close_hour_dif_std = load_pickle_object(data_path + 'open_close_hour_dif_std.pickle')
-ALL_TICKERS = [
-    'NVTK', 'SBER', 'GAZP', 'POLY', 'TATN', 'LKOH', 'MTSS', 'ROSN', 'MAIL', 'YNDX',
-    'PLZL', 'FIVE', 'GMKN', 'MGNT', 'SNGS', 'SNGSP', 'SBERP', 'ALRS', 'MOEX', 'RTKM',
-    'VTBR'
-]
+
+prices_path = '/mnt/win_share/prices/'
+ALL_TICKERS = [file_name.split()[0] for file_name in listdir(prices_path)]
+
 AGG_DICT = {
     'open': 'first', 'high': 'max', 'low': 'min',
     'close': 'last', 'real_volume': 'sum'
@@ -66,7 +66,7 @@ def run(ticker):
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
             )
-            #send_message(messsage)
+            send_message(messsage)
             set_signal_is_sent_flag(ticker)
         elif condition_long:
             sl = round(
@@ -81,7 +81,7 @@ def run(ticker):
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
             )
-            #send_message(messsage)
+            send_message(messsage)
             set_signal_is_sent_flag(ticker)
 
 if __name__ == '__main__':
