@@ -11,6 +11,7 @@ from multiprocessing import Pool
 import pandas as pd
 import pickle
 from os import listdir
+from ta.volatility import BollingerBands
 from ta.momentum import RSIIndicator
 from time import sleep
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -36,9 +37,7 @@ def run(ticker):
 
         tf_1hour = get_candles(ticker)
         rsi_1hour = RSIIndicator(close=tf_1hour.close).rsi()
-
-        print(rsi_1hour.tail(10))
-        sleep(100)
+        bolinger_1hour = BollingerBands(close=tf_1hour.close)
 
         condition_short = rsi_1min[-1] >= 80 and rsi_5min[-1] >= 80
         condition_long = rsi_1min[-1] <= 20 and rsi_5min[-1] <= 20
