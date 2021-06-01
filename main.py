@@ -34,11 +34,11 @@ def run(ticker):
 
     if (not signal_is_sent):
 
-        tf_1min = get_candles(ticker)
-        tf_5min = tf_1min.resample('5Min').agg(AGG_DICT)
+        tf_1hour = get_candles(ticker)
+        rsi_1hour = RSIIndicator(close=tf_1hour.close).rsi()
 
-        rsi_1min = RSIIndicator(close=tf_1min.close).rsi()
-        rsi_5min = RSIIndicator(close=tf_5min.close).rsi()
+        print(rsi_1hour.tail(10))
+        sleep(100)
 
         condition_short = rsi_1min[-1] >= 80 and rsi_5min[-1] >= 80
         condition_long = rsi_1min[-1] <= 20 and rsi_5min[-1] <= 20
@@ -62,7 +62,7 @@ def run(ticker):
                 tf_1min.close[-1] - STOP_LOSS_THRESH * tf_1min.close[-1],
                 ticker_info[ticker]['price_digits']
             )
-            print('\n', cur_time, ticker, ': SHORT', str(trade_size), sl, tp, '\n')
+            print('\n', cur_time, ticker, ': SHORT', str(trade_size), tf_1min.close[-1], sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'SHORT', str(trade_size), str(sl), str(tp)]
             )
@@ -77,7 +77,7 @@ def run(ticker):
                 tf_1min.close[-1] + STOP_LOSS_THRESH * tf_1min.close[-1],
                 ticker_info[ticker]['price_digits']
             )
-            print('\n', cur_time, ticker, ': LONG', str(trade_size), sl, tp, '\n')
+            print('\n', cur_time, ticker, ': LONG', str(trade_size), tf_1min.close[-1], sl, tp, '\n')
             messsage = ' '.join(
                 [cur_time, ticker, 'LONG', str(trade_size), str(sl), str(tp)]
             )
